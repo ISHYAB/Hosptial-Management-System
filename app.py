@@ -69,7 +69,7 @@ def create_app():
             password = request.form['password']
             full_name = request.form['full_name'].strip() or username
 
-            age_raw = request.form.get('age') 
+            age_string = request.form.get('age') 
             contact = request.form.get('contact', '').strip()
             address = request.form.get('address', '').strip()
 
@@ -81,7 +81,7 @@ def create_app():
             db.session.add(user)
             db.session.commit()
 
-            age = int(age_raw) if age_raw else None
+            age = int(age_string) if age_string else None
 
             patient = Patient(
                 user_id=user.id,
