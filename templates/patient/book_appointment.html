@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+{% block content %}
+<h3>Book with Dr. {{ doctor.full_name }}</h3>
+<p>Specialization: {{ doctor.specialization.name if doctor.specialization else 'N/A' }}</p>
+<form method="post">
+  <div class="mb-2"><label>Date</label><input class="form-control" type="date" name="date" required></div>
+  <div class="mb-2"><label>Time</label><input class="form-control" type="time" name="time" required></div>
+  <div class="mb-2"><label>Reason</label><textarea class="form-control" name="reason"></textarea></div>
+  <button class="btn btn-success">Book Appointment</button>
+</form>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+{% block content %}
+<h3>Appointment #{{ appointment.id }}</h3>
+
+<div class="card mb-3 p-3">
+  <div class="row">
+    <div class="col-md-6">
+      <p><strong>Patient:</strong> {{ appointment.patient.full_name }}</p>
+      <p><strong>Specialization:</strong> {{ appointment.doctor.specialization.name if appointment.doctor.specialization else 'N/A' }}</p>
+    </div>
+    <div class="col-md-6">
+      <p><strong>Date:</strong> {{ appointment.date }}</p>
+      <p><strong>Time:</strong> {{ appointment.time.strftime("%H:%M") }}</p>
+      <p><strong>Status:</strong>
+        {% if appointment.status == 'Booked' %}
+          <span class="badge bg-warning text-dark">{{ appointment.status }}</span>
+        {% elif appointment.status == 'Completed' %}
+          <span class="badge bg-success">{{ appointment.status }}</span>
+        {% else %}
+          <span class="badge bg-danger">{{ appointment.status }}</span>
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="mb-3">
+    <h5>Reason for Visit</h5>
+    <p>{{ appointment.reason or 'No reason provided by patient.' }}</p>
+  </div>
+
+  <hr>
+
+  {% if appointment.status == 'Cancelled' %}
+    <div class="alert alert-warning">
+     The appointment is cancelled.
+    </div>
+
+    <div class="mb-3">
+      <h5>Treatment (if any)</h5>
+      {% if appointment.treatment %}
+        <p><strong>Diagnosis:</strong> {{ appointment.treatment.diagnosis or '-' }}</p>
+        <p><strong>Prescription:</strong> {{ appointment.treatment.prescription or '-' }}</p>
+        <p><strong>Notes:</strong> {{ appointment.treatment.notes or '-' }}</p>
+      {% else %}
+        <div class="alert alert-info">No treatment recorded for this appointment.</div>
+      {% endif %}
+    </div>
+
+    <a class="btn btn-secondary" href="{{ url_for('doctor_dashboard') }}">Back to Dashboard</a>
+
+  {% else %}
+   
+    <form method="post">
+      <div class="mb-3"><label>Diagnosis</label>
+        <textarea name="diagnosis" class="form-control">{% if appointment.treatment %}{{ appointment.treatment.diagnosis }}{% endif %}</textarea></div>
+      <div class="mb-3"><label>Prescription</label>
+        <textarea name="prescription" class="form-control">{% if appointment.treatment %}{{ appointment.treatment.prescription }}{% endif %}</textarea></div>
+      <div class="mb-3"><label>Notes</label>
+        <textarea name="notes" class="form-control">{% if appointment.treatment %}{{ appointment.treatment.notes }}{% endif %}</textarea></div>
+
+      <button class="btn btn-success" name="action" value="complete">Mark Completed & Save</button>
+      <button class="btn btn-danger" name="action" value="cancel" onclick="return confirm('Cancel this appointment?')">Cancel Appointment</button>
+      <a class="btn btn-secondary" href="{{ url_for('doctor_dashboard') }}">Back</a>
+    </form>
+  {% endif %}
+
+</div>
+{% endblock %}

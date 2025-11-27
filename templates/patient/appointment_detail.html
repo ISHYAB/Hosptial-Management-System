@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+{% block content %}
+<h3>Appointment #{{ appointment.id }}</h3>
+
+<div class="card mb-3 p-3">
+  <div class="row">
+    <div class="col-md-6">
+      <p><strong>Doctor:</strong> {{ appointment.doctor.full_name }}</p>
+      <p><strong>Specialization:</strong> {{ appointment.doctor.specialization.name if appointment.doctor.specialization else 'N/A' }}</p>
+    </div>
+    <div class="col-md-6">
+      <p><strong>Date:</strong> {{ appointment.date }}</p>
+      <p><strong>Time:</strong> {{ appointment.time.strftime("%H:%M") }}</p>
+      <p><strong>Status:</strong>
+        {% if appointment.status == 'Booked' %}
+          <span class="badge bg-warning text-dark">{{ appointment.status }}</span>
+        {% elif appointment.status == 'Completed' %}
+          <span class="badge bg-success">{{ appointment.status }}</span>
+        {% else %}
+          <span class="badge bg-danger">{{ appointment.status }}</span>
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  <hr>
+  <p><strong>Reason / Notes:</strong> {{ appointment.reason or 'No reason provided' }}</p>
+
+  {% if appointment.treatment %}
+    <hr>
+    <h5>Treatment (Recorded)</h5>
+    <p><strong>Diagnosis:</strong> {{ appointment.treatment.diagnosis or '-' }}</p>
+    <p><strong>Prescription:</strong> {{ appointment.treatment.prescription or '-' }}</p>
+    <p><strong>Doctor notes:</strong> {{ appointment.treatment.notes or '-' }}</p>
+    <p class="text-muted"><small>Recorded on {{ appointment.treatment.created_at.strftime("%Y-%m-%d %H:%M") }}</small></p>
+  {% else %}
+    <div class="alert alert-info">No treatment recorded yet for this appointment.</div>
+  {% endif %}
+
+  <div class="mt-3">
+    <a class="btn btn-secondary" href="{{ url_for('patient_dashboard') }}">Back to Dashboard</a>
+
+    {% if appointment.status == 'Booked' %}
+      <form method="post" action="{{ url_for('patient_cancel_appointment', aid=appointment.id) }}" style="display:inline;">
+        <button class="btn btn-danger" onclick="return confirm('Cancel this appointment?')">Cancel Appointment</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

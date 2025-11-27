@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Admin Dashboard</h2>
+<div class="row">
+  <div class="col-md-4"><div class="card p-3"><h5>Doctors</h5><p>{{ total_doctors }}</p></div></div>
+  <div class="col-md-4"><div class="card p-3"><h5>Patients</h5><p>{{ total_patients }}</p></div></div>
+  <div class="col-md-4"><div class="card p-3"><h5>Appointments</h5><p>{{ total_appointments }}</p></div></div>
+</div>
+
+<hr>
+<h4>Recent Appointments</h4>
+<table class="table">
+  <thead><tr><th>ID</th><th>Doctor</th><th>Patient</th><th>Date</th><th>Time</th><th>Status</th></tr></thead>
+  <tbody>
+    {% for a in appointments %}
+      <tr>
+        <td>{{ a.id }}</td>
+        <td>{{ a.doctor.full_name }}</td>
+        <td>{{ a.patient.full_name }}</td>
+        <td>{{ a.date }}</td>
+        <td>{{ a.time.strftime("%H:%M") }}</td>
+        <td>{{ a.status }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<a class="btn btn-primary" href="{{ url_for('admin_doctors') }}">Manage Doctors</a>
+<a class="btn btn-secondary" href="{{ url_for('admin_appointments') }}">View All Appointments</a>
+<h4>Appointments by Department</h4>
+<img src="{{ url_for('static', filename='appointments_pie.png') }}"
+     alt="Appointments Pie Chart"
+     style="max-width: 400px; border: 2px solid #ddd; border-radius: 10px;">
+
+{% endblock %}

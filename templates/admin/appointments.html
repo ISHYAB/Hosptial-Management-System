@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block content %}
+<h3>All Appointments</h3>
+
+<form class="mb-3 row g-2" method="get">
+  <div class="col-md-8">
+    <input class="form-control" name="q" placeholder="Search by patient or doctor" value="{{ request.args.get('q','') }}">
+  </div>
+  <div class="col-md-4">
+    <button class="btn btn-primary w-100" type="submit">Search</button>
+  </div>
+</form>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Doctor</th>
+      <th>Patient</th>
+      <th>Date</th>
+      <th>Time</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for a in appointments %}
+      <tr>
+        <td>{{ a.id }}</td>
+        <td>{{ a.doctor.full_name }}</td>
+        <td>{{ a.patient.full_name }}</td>
+        <td>{{ a.date }}</td>
+        <td>{{ a.time.strftime("%H:%M") }}</td>
+        <td>
+          {% if a.status == 'Booked' %}
+            <span class="badge bg-warning text-dark">{{ a.status }}</span>
+          {% elif a.status == 'Completed' %}
+            <span class="badge bg-success">{{ a.status }}</span>
+          {% else %}
+            <span class="badge bg-danger">{{ a.status }}</span>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr>
+        <td colspan="6" class="text-center">No appointments found.</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<a class="btn btn-secondary" href="{{ url_for('admin_dashboard') }}">Back to Dashboard</a>
+{% endblock %}

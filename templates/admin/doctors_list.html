@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+{% block content %}
+<h3>Doctors</h3>
+<div class="row">
+  <div class="col-md-6">
+    <h5>Add Doctor</h5>
+    <form method="post">
+      <div class="mb-2"><label>Full name</label><input class="form-control" name="full_name" required></div>
+      <div class="mb-2"><label>Username</label><input class="form-control" name="username" required></div>
+      <div class="mb-2"><label>Password</label><input class="form-control" type="password" name="password" required></div>
+      <div class="mb-2"><label>Specialization</label>
+        <select name="specialization" class="form-select">
+          <option value="">-- none --</option>
+          {% for d in departments %}
+            <option value="{{ d.id }}">{{ d.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-2"><label>Availability (notes)</label><input class="form-control" name="availability"></div>
+      <button class="btn btn-success">Add Doctor</button>
+    </form>
+  </div>
+  <div class="col-md-6">
+    <h5>Existing Doctors</h5>
+    <table class="table">
+      <thead><tr><th>Name</th><th>Specialization</th><th>Active</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for doc in doctors %}
+          <tr>
+            <td>{{ doc.full_name }}</td>
+            <td>{{ doc.specialization.name if doc.specialization else '-' }}</td>
+            <td>{{ 'Yes' if doc.is_active else 'No' }}</td>
+            <td>
+              <form method="post" action="{{ url_for('admin_delete_doctor', id=doc.id) }}" style="display:inline;">
+                <button class="btn btn-sm btn-danger" onclick="return confirm('Delete doctor?')">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

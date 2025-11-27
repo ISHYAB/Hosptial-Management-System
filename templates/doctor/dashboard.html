@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% block content %}
+<h3>Doctor Dashboard - {{ doctor.full_name }}</h3>
+<h5>Upcoming Appointments</h5>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Patient</th>
+      <th>Date</th>
+      <th>Time</th>
+      <th>Reason</th>
+      <th>Status</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for a in upcoming %}
+      <tr>
+        <td>{{ a.id }}</td>
+        <td>{{ a.patient.full_name }}</td>
+        <td>{{ a.date }}</td>
+        <td>{{ a.time.strftime("%H:%M") }}</td>
+
+        
+        <td>
+          {% if a.reason %}
+            {{ a.reason[:40] }}{% if a.reason|length > 40 %}...{% endif %}
+          {% else %}
+            <small class="text-muted">No reason</small>
+          {% endif %}
+        </td>
+
+        
+        <td>
+          {% if a.status == 'Booked' %}
+            <span class="badge bg-warning text-dark">Booked</span>
+          {% elif a.status == 'Completed' %}
+            <span class="badge bg-success">Completed</span>
+          {% elif a.status == 'Cancelled' %}
+            <span class="badge bg-danger">Cancelled</span>
+          {% else %}
+            {{ a.status }}
+          {% endif %}
+        </td>
+
+        <td>
+          <a class="btn btn-sm btn-primary"
+             href="{{ url_for('doctor_appointment_detail', aid=a.id) }}">
+             Manage
+          </a>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

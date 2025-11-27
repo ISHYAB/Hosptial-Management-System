@@ -1,0 +1,8 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="text-center">
+  <h1>Welcome to the Hospital Management System</h1>
+  <a class="btn btn-primary" href="{{ url_for('register') }}">Register as Patient</a>
+  <a class="btn btn-secondary" href="{{ url_for('login') }}">Login</a>
+</div>
+{% endblock %}
