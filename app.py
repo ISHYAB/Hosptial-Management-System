@@ -28,12 +28,12 @@ def create_app():
         db.create_all()
         initial_data()
 
-    def login_user(user):
+    def login(user):
         session['user_id'] = user.id
         session['role'] = user.role
         session['username'] = user.username
 
-    def logout_user():
+    def logout():
         session.pop('user_id', None)
         session.pop('role', None)
         session.pop('username', None)
@@ -69,7 +69,7 @@ def create_app():
             password = request.form['password']
             full_name = request.form['full_name'].strip() or username
 
-            age_raw = request.form.get('age')  # may be empty
+            age_raw = request.form.get('age') 
             contact = request.form.get('contact', '').strip()
             address = request.form.get('address', '').strip()
 
@@ -106,7 +106,7 @@ def create_app():
             password = request.form['password']
             user = User.query.filter_by(username=username).first()
             if user and user.password == password:
-                login_user(user)
+                login(user)
                 flash("Logged in successfully", "success")
                 if user.role == 'admin':
                     return redirect(url_for('admin_dashboard'))
@@ -119,7 +119,7 @@ def create_app():
 
     @app.route('/logout')
     def logout():
-        logout_user()
+        logout()
         flash("Logged out", "info")
         return redirect(url_for('index'))
 
