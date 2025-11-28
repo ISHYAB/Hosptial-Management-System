@@ -26,9 +26,10 @@
 </table>
 <a class="btn btn-primary" href="{{ url_for('admin_doctors') }}">Manage Doctors</a>
 <a class="btn btn-secondary" href="{{ url_for('admin_appointments') }}">View All Appointments</a>
-<h4>Appointments by Department</h4>
+<h3>Appointments per departments</h3>
 <img src="{{ url_for('static', filename='appointments_pie.png') }}"
      alt="Appointments Pie Chart"
      style="max-width: 400px; border: 2px solid #ddd; border-radius: 10px;">
+
 
 {% endblock %}

@@ -18,7 +18,6 @@ def create_app():
             ]
             db.session.bulk_save_objects(deps)
             db.session.commit()
-
         if not User.query.filter_by(role='admin').first():
             admin = User(username='admin', password='admin123', role='admin')
             db.session.add(admin)
@@ -28,12 +27,12 @@ def create_app():
         db.create_all()
         initial_data()
 
-    def login(user):
+    def login_user(user):
         session['user_id'] = user.id
         session['role'] = user.role
         session['username'] = user.username
 
-    def logout():
+    def logout_user():
         session.pop('user_id', None)
         session.pop('role', None)
         session.pop('username', None)
@@ -68,36 +67,22 @@ def create_app():
             username = request.form['username'].strip()
             password = request.form['password']
             full_name = request.form['full_name'].strip() or username
-
-            age_string = request.form.get('age') 
+            age_string = request.form.get('age')
             contact = request.form.get('contact', '').strip()
             address = request.form.get('address', '').strip()
-
             if User.query.filter_by(username=username).first():
                 flash("Username already exists", "danger")
                 return redirect(url_for('register'))
-
             user = User(username=username, password=password, role='patient')
             db.session.add(user)
             db.session.commit()
-
             age = int(age_string) if age_string else None
-
-            patient = Patient(
-                user_id=user.id,
-                full_name=full_name,
-                age=age,
-                contact=contact or None,
-                address=address or None
-            )
+            patient = Patient(user_id=user.id, full_name=full_name, age=age, contact=contact or None, address=address or None)
             db.session.add(patient)
             db.session.commit()
-
             flash("Registration successful. Please login.", "success")
             return redirect(url_for('login'))
-
         return render_template('auth/register.html')
-
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
@@ -106,7 +91,7 @@ def create_app():
             password = request.form['password']
             user = User.query.filter_by(username=username).first()
             if user and user.password == password:
-                login(user)
+                login_user(user)
                 flash("Logged in successfully", "success")
                 if user.role == 'admin':
                     return redirect(url_for('admin_dashboard'))
@@ -119,7 +104,7 @@ def create_app():
 
     @app.route('/logout')
     def logout():
-        logout()
+        logout_user()
         flash("Logged out", "info")
         return redirect(url_for('index'))
 
@@ -132,37 +117,23 @@ def create_app():
         doctors = Doctor.query.all()
         patients = Patient.query.all()
         appointments = Appointment.query.order_by(Appointment.date.desc()).limit(20).all()
-
-    
         import matplotlib
-        matplotlib.use('Agg')   
+        matplotlib.use('Agg')
         import matplotlib.pyplot as plt
-
-    
         department_names = []
         departments_counts = []
-
         for dept in Department.query.all():
             count = Appointment.query.join(Doctor).filter(Doctor.specialization_id == dept.id).count()
             department_names.append(dept.name)
             departments_counts.append(count)
-
-    
         plt.figure(figsize=(5, 5))
         plt.pie(departments_counts, labels=department_names, autopct='%1.1f%%', startangle=40)
         plt.title('Appointments Per Department')
         chart_path = 'static/appointments_pie.png'
         plt.savefig(chart_path)
         plt.close()
+        return render_template('admin/dashboard.html', total_doctors=total_doctors, total_patients=total_patients, total_appointments=total_appointments, doctors=doctors, patients=patients, appointments=appointments)
 
-        return render_template('admin/dashboard.html',
-                           total_doctors=total_doctors,
-                           total_patients=total_patients,
-                           total_appointments=total_appointments,
-                           doctors=doctors,
-                           patients=patients,
-                           appointments=appointments,
-                           chart_path=chart_path)
     @app.route('/admin/doctors', methods=['GET', 'POST'])
     @login_required(role='admin')
     def admin_doctors():
@@ -185,7 +156,7 @@ def create_app():
             return redirect(url_for('admin_doctors'))
         departments = Department.query.all()
         doctors = Doctor.query.all()
-        return render_template('admin/doctors_list.html', doctors=doctors, departments=Departments)
+        return render_template('admin/doctors_list.html', doctors=doctors, departments=departments)
 
     @app.route('/admin/doctors/delete/<int:id>', methods=['POST'])
     @login_required(role='admin')
@@ -204,9 +175,7 @@ def create_app():
     def admin_appointments():
         q = request.args.get('q','')
         if q:
-            appointments = Appointment.query.join(Patient).join(Doctor).filter(
-                (Patient.full_name.ilike(f"%{q}%")) | (Doctor.full_name.ilike(f"%{q}%"))
-            ).all()
+            appointments = Appointment.query.join(Patient).join(Doctor).filter((Patient.full_name.ilike(f"%{q}%")) | (Doctor.full_name.ilike(f"%{q}%"))).all()
         else:
             appointments = Appointment.query.order_by(Appointment.date.desc()).all()
         return render_template('admin/appointments.html', appointments=appointments, query=q)
@@ -232,47 +201,33 @@ def create_app():
         user = current_user()
         doctor = Doctor.query.filter_by(user_id=user.id).first()
         appointment = Appointment.query.get_or_404(aid)
-
         if appointment.doctor_id != doctor.id:
             abort(403)
-
         if request.method == 'POST':
             if appointment.status == 'Cancelled':
                 flash("This appointment was cancelled by the patient. You cannot modify it.", "warning")
                 return redirect(url_for('doctor_appointment_detail', aid=appointment.id))
-
             action = request.form.get('action')
-
             if action == 'complete':
                 appointment.status = 'Completed'
                 diagnosis = request.form.get('diagnosis')
                 prescription = request.form.get('prescription')
                 notes = request.form.get('notes')
-
                 if appointment.treatment:
                     t = appointment.treatment
                     t.diagnosis = diagnosis
                     t.prescription = prescription
                     t.notes = notes
                 else:
-                    t = Treatment(
-                        appointment_id=appointment.id,
-                        diagnosis=diagnosis,
-                        prescription=prescription,
-                        notes=notes
-                    )
+                    t = Treatment(appointment_id=appointment.id, diagnosis=diagnosis, prescription=prescription, notes=notes)
                     db.session.add(t)
-
                 db.session.commit()
                 flash("Appointment completed", "success")
-
             elif action == 'cancel':
                 appointment.status = 'Cancelled'
                 db.session.commit()
                 flash("Appointment cancelled", "info")
-
             return redirect(url_for('doctor_dashboard'))
-
         return render_template('doctor/appointment_detail.html', appointment=appointment)
 
     @app.route('/patient/dashboard')
@@ -317,12 +272,10 @@ def create_app():
             except Exception:
                 flash("Invalid date/time format", "danger")
                 return redirect(url_for('book_appointment', doctor_id=doctor_id))
-
             conflict = Appointment.query.filter_by(doctor_id=doctor.id, date=sdate, time=stime, status='Booked').first()
             if conflict:
                 flash("Selected slot is not available", "danger")
                 return redirect(url_for('book_appointment', doctor_id=doctor_id))
-
             apt = Appointment(doctor_id=doctor.id, patient_id=patient.id, date=sdate, time=stime, status='Booked', reason=reason)
             db.session.add(apt)
             db.session.commit()
