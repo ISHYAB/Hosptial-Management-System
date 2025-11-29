@@ -24,12 +24,27 @@
     {% endfor %}
   </tbody>
 </table>
-<a class="btn btn-primary" href="{{ url_for('admin_doctors') }}">Manage Doctors</a>
-<a class="btn btn-secondary" href="{{ url_for('admin_appointments') }}">View All Appointments</a>
-<h3>Appointments per departments</h3>
-<img src="{{ url_for('static', filename='appointments_pie.png') }}"
-     alt="Appointments Pie Chart"
-     style="max-width: 400px; border: 2px solid #ddd; border-radius: 10px;">
-
+<div class="my-4">
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('admin_doctors') }}" class="btn btn-primary">Manage Doctors</a>
+    <a href="{{ url_for('admin_appointments') }}" class="btn btn-secondary">View All Appointments</a>
+    <a href="{{ url_for('admin_patients') }}" class="btn btn-primary">View Patients</a>
+  </div>
+</div>
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-body text-center">
+        {% if show_chart %}
+          <div class="d-flex justify-content-center">
+            <img src="{{ url_for('static', filename=chart_filename) }}" alt="Appointments chart" class="img-fluid" style="max-width:540px;">
+          </div>
+        {% else %}
+          <div class="alert alert-info mb-0">No appointment data yet — pie chart will appear after appointments are created.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
 
 {% endblock %}

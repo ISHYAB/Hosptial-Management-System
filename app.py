@@ -2,6 +2,12 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from config import Config
 from models import db, User, Department, Doctor, Patient, Appointment, Treatment
 from datetime import datetime, date, time
+import os
+import math
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 
 def create_app():
     app = Flask(__name__)
@@ -107,7 +113,6 @@ def create_app():
         logout_user()
         flash("Logged out", "info")
         return redirect(url_for('index'))
-
     @app.route('/admin/dashboard')
     @login_required(role='admin')
     def admin_dashboard():
@@ -117,22 +122,46 @@ def create_app():
         doctors = Doctor.query.all()
         patients = Patient.query.all()
         appointments = Appointment.query.order_by(Appointment.date.desc()).limit(20).all()
-        import matplotlib
-        matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
         department_names = []
         departments_counts = []
         for dept in Department.query.all():
-            count = Appointment.query.join(Doctor).filter(Doctor.specialization_id == dept.id).count()
             department_names.append(dept.name)
-            departments_counts.append(count)
-        plt.figure(figsize=(5, 5))
-        plt.pie(departments_counts, labels=department_names, autopct='%1.1f%%', startangle=40)
-        plt.title('Appointments Per Department')
-        chart_path = 'static/appointments_pie.png'
-        plt.savefig(chart_path)
-        plt.close()
-        return render_template('admin/dashboard.html', total_doctors=total_doctors, total_patients=total_patients, total_appointments=total_appointments, doctors=doctors, patients=patients, appointments=appointments)
+            count = Appointment.query.join(Doctor).filter(Doctor.specialization_id == dept.id).count()
+            departments_counts.append(int(count or 0))
+        chart_filename = 'appointments_pie.png'
+        chart_path = os.path.join(app.root_path, 'static', chart_filename)
+
+        total = sum(departments_counts)
+        show_chart = False
+
+        if total > 0:
+            os.makedirs(os.path.dirname(chart_path), exist_ok=True)
+            plt.figure(figsize=(5, 5))
+            plt.pie(departments_counts, labels=department_names, autopct='%1.1f%%', startangle=40)
+            plt.title('Appointments Per Department')
+            plt.savefig(chart_path, bbox_inches='tight')
+            plt.close()
+            show_chart = True
+        else:
+            if os.path.exists(chart_path):
+                try:
+                    os.remove(chart_path)
+                except Exception:
+                    pass
+            show_chart = False
+
+        return render_template(
+            'admin/dashboard.html',
+            total_doctors=total_doctors,
+            total_patients=total_patients,
+            total_appointments=total_appointments,
+            doctors=doctors,
+            patients=patients,
+            appointments=appointments,
+            show_chart=show_chart,
+            chart_filename=chart_filename
+        )
+
 
     @app.route('/admin/doctors', methods=['GET', 'POST'])
     @login_required(role='admin')
@@ -179,6 +208,41 @@ def create_app():
         else:
             appointments = Appointment.query.order_by(Appointment.date.desc()).all()
         return render_template('admin/appointments.html', appointments=appointments, query=q)
+    @app.route('/admin/patients')
+    @login_required(role='admin')
+    def admin_patients():
+        q = request.args.get('q', '').strip()
+
+        if q:
+            patients = Patient.query.filter(
+                Patient.full_name.ilike(f"%{q}%")
+            ).order_by(Patient.id.desc()).all()
+        else:
+            patients = Patient.query.order_by(Patient.id.desc()).all()
+
+        return render_template('admin/patients_list.html', patients=patients, query=q)
+
+    @app.route('/admin/patients/delete/<int:id>', methods=['POST'])
+    @login_required(role='admin')
+    def admin_delete_patient(id):
+        patient = Patient.query.get_or_404(id)
+        user = User.query.get(patient.user_id) if patient.user_id else None
+        if Appointment.query.filter_by(patient_id=patient.id).count() > 0:
+            flash("Cannot delete patient with active appointments.", "warning")
+            return redirect(url_for('admin_patients'))
+
+        try:
+            db.session.delete(patient)
+            if user:
+                db.session.delete(user)
+            db.session.commit()
+            flash("Patient removed", "info")
+        except:
+            db.session.rollback()
+            flash("Error deleting patient.", "danger")
+
+        return redirect(url_for('admin_patients'))
+
 
     @app.route('/doctor/dashboard')
     @login_required(role='doctor')
